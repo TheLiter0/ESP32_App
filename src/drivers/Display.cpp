@@ -13,8 +13,9 @@ void Display::clear() {
 }
 
 uint16_t Display::rgb565_(uint8_t r, uint8_t g, uint8_t b) {
-  return tft_.color565(r, g, b);
+  return tft_.color565(b, g, r);
 }
+
 
 void Display::setText(int16_t x, int16_t y, uint8_t size, uint8_t r, uint8_t g, uint8_t b) {
   tft_.setCursor(x, y);

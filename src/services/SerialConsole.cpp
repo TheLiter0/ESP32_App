@@ -35,6 +35,7 @@ void SerialConsole::handleLine_(char* s) {
 
   if (strcmp(cmd, "help") == 0) {
     logger_->info("Commands:");
+    logger_->info("  selftest");
     logger_->info("  help");
     logger_->info("  cls");
     logger_->info("  ready");
@@ -62,6 +63,39 @@ void SerialConsole::handleLine_(char* s) {
     display_->print("READY");
     return;
   }
+  if (strcmp(cmd, "selftest") == 0) {
+  // Full-screen sanity test (fast, deterministic)
+  display_->clear();
+  // separators (match your current layout y values)
+  display_->line(0, 20, 159, 20, 255, 255, 255);
+  display_->line(0, 107, 159, 107, 255, 255, 255);
+
+  // top + status
+  display_->textInBox(Layout::TOPBAR.x, Layout::TOPBAR.y, Layout::TOPBAR.w, Layout::TOPBAR.h,
+                      1, 255, 255, 255, "TOP BAR OK");
+  display_->textInBox(Layout::STATUS.x, Layout::STATUS.y, Layout::STATUS.w, Layout::STATUS.h,
+                      1, 255, 255, 255, "STATUS OK");
+
+  // clear canvas only
+  display_->clearRect(Layout::CANVAS.x, Layout::CANVAS.y, Layout::CANVAS.w, Layout::CANVAS.h);
+
+  // RGB pixels at canvas (5,5)(6,5)(7,5)
+  display_->pixel(Layout::CANVAS.x + 5, Layout::CANVAS.y + 5, 255, 0, 0);
+  display_->pixel(Layout::CANVAS.x + 6, Layout::CANVAS.y + 5, 0, 255, 0);
+  display_->pixel(Layout::CANVAS.x + 7, Layout::CANVAS.y + 5, 0, 0, 255);
+
+  // border
+  int w = display_->width();
+  int h = display_->height();
+  display_->rect(0, 0, w, h, 255, 255, 255);
+  display_->fillRect(0, 0, 6, 6, 0, 255, 0);
+  display_->fillRect(w - 6, 0, 6, 6, 255, 0, 0);
+  display_->fillRect(0, h - 6, 6, 6, 0, 0, 255);
+  display_->fillRect(w - 6, h - 6, 6, 6, 0, 255, 255); // cyan BR to match your mapping
+
+  logger_->info("Selftest done");
+  return;
+}
 
   if (strcmp(cmd, "border") == 0) {
     int w = display_->width();
