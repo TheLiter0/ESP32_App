@@ -3,6 +3,9 @@
 void App::begin() {
   logger_.begin(115200);
   logger_.info("Boot");
+  logger_.info(String(display_.width()).c_str());
+  logger_.info(String(display_.height()).c_str());
+
 
   tick_.begin();
 

@@ -9,6 +9,17 @@ public:
   }
 
   void info(const char* msg) {
+    Serial.print("[I] ");
+    Serial.println(msg);
+  }
+
+  void warn(const char* msg) {
+    Serial.print("[W] ");
+    Serial.println(msg);
+  }
+
+  void error(const char* msg) {
+    Serial.print("[E] ");
     Serial.println(msg);
   }
 };

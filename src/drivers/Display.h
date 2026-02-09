@@ -6,8 +6,17 @@ class Display {
 public:
   void begin();
   void clear();
+
   void setText(int16_t x, int16_t y, uint8_t size, uint8_t r, uint8_t g, uint8_t b);
   void print(const char* s);
+
+  void pixel(int16_t x, int16_t y, uint8_t r, uint8_t g, uint8_t b);
+  void line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t r, uint8_t g, uint8_t b);
+  void rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t r, uint8_t g, uint8_t b);
+  void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t r, uint8_t g, uint8_t b);
+
+  int16_t width() const;
+  int16_t height() const;
 
 private:
   static constexpr int TFT_CS  = 5;
