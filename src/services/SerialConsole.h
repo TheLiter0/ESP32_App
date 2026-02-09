@@ -1,5 +1,3 @@
-#pragma once
-
 #include "src/services/Logger.h"
 #include "src/drivers/Display.h"
 #include "src/ui/Layout.h"

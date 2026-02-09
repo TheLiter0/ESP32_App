@@ -4,6 +4,8 @@
 #include "src/services/Logger.h"
 #include "src/services/Tick.h"
 #include "src/services/SerialConsole.h"
+#include "src/ui/ScreenManager.h"
+#include "src/ui/BootScreen.h"
 
 class App {
 public:
@@ -15,4 +17,6 @@ private:
   Tick tick_;
   Display display_;
   SerialConsole console_;
+  ScreenManager screens_;
+  BootScreen boot_;
 };
