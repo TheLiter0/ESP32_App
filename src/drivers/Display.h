@@ -18,6 +18,11 @@ public:
   int16_t width() const;
   int16_t height() const;
 
+  // Helper methods (region-friendly)
+  void clearRect(int16_t x, int16_t y, int16_t w, int16_t h);
+  void textInBox(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t size,
+                 uint8_t r, uint8_t g, uint8_t b, const char* msg);
+
 private:
   static constexpr int TFT_CS  = 5;
   static constexpr int TFT_DC  = 16;

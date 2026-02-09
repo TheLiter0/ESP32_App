@@ -30,7 +30,7 @@ void SerialConsole::update() {
 void SerialConsole::handleLine_(char* s) {
   char* p = s;
 
-  char cmd[16];
+  char cmd[20];
   if (!nextToken_(p, cmd, sizeof(cmd))) return;
 
   if (strcmp(cmd, "help") == 0) {
@@ -38,12 +38,17 @@ void SerialConsole::handleLine_(char* s) {
     logger_->info("  help");
     logger_->info("  cls");
     logger_->info("  ready");
+    logger_->info("  border");
+    logger_->info("  layout   (draw region separator lines)");
     logger_->info("  text x y size r g b msg_with_underscores");
     logger_->info("  rect x y w h r g b");
     logger_->info("  fillrect x y w h r g b");
     logger_->info("  line x0 y0 x1 y1 r g b");
     logger_->info("  px x y r g b");
-    logger_->info("  border   (draw 1px border + corners)");
+    logger_->info("  top msg_with_underscores");
+    logger_->info("  status msg_with_underscores");
+    logger_->info("  canvas_cls");
+    logger_->info("  canvas_px x y r g b   (x 0-127, y 0-119)");
     return;
   }
 
@@ -62,13 +67,57 @@ void SerialConsole::handleLine_(char* s) {
     int w = display_->width();
     int h = display_->height();
     display_->rect(0, 0, w, h, 255, 255, 255);
-    display_->fillRect(0, 0, 6, 6, 0, 255, 0);                 // TL
-    display_->fillRect(w - 6, 0, 6, 6, 255, 0, 0);             // TR
-    display_->fillRect(0, h - 6, 6, 6, 0, 0, 255);             // BL
-    display_->fillRect(w - 6, h - 6, 6, 6, 255, 255, 0);       // BR
+    display_->fillRect(0, 0, 6, 6, 0, 255, 0);
+    display_->fillRect(w - 6, 0, 6, 6, 255, 0, 0);
+    display_->fillRect(0, h - 6, 6, 6, 0, 0, 255);
+    display_->fillRect(w - 6, h - 6, 6, 6, 255, 255, 0);
+    return;
+  }
+  if (strcmp(cmd, "layout") == 0) {
+  // Draw the two horizontal separators: y=20 and y=140
+  display_->line(0, 20, 159, 20, 255, 255, 255);     // between top and canvas
+  display_->line(0, 107, 159, 107, 255, 255, 255);   // between canvas and status (outside status)
+
+
+  return;
+}
+
+
+  // Region text commands
+  if (strcmp(cmd, "top") == 0 || strcmp(cmd, "status") == 0) {
+    char msg[120];
+    if (!nextToken_(p, msg, sizeof(msg))) return;
+
+    for (size_t i = 0; msg[i]; i++) if (msg[i] == '_') msg[i] = ' ';
+
+    const RectI box = (strcmp(cmd, "top") == 0) ? Layout::TOPBAR : Layout::STATUS;
+    display_->textInBox(box.x, box.y, box.w, box.h, 1, 255, 255, 255, msg);
     return;
   }
 
+  if (strcmp(cmd, "canvas_cls") == 0) {
+    const RectI c = Layout::CANVAS;
+    display_->clearRect(c.x, c.y, c.w, c.h);
+    return;
+  }
+
+  if (strcmp(cmd, "canvas_px") == 0) {
+    char t[24];
+    int x,y,r,g,b;
+
+    if (!nextToken_(p, t, sizeof(t)) || !parseInt_(t, x)) return;
+    if (!nextToken_(p, t, sizeof(t)) || !parseInt_(t, y)) return;
+    if (!nextToken_(p, t, sizeof(t)) || !parseInt_(t, r)) return;
+    if (!nextToken_(p, t, sizeof(t)) || !parseInt_(t, g)) return;
+    if (!nextToken_(p, t, sizeof(t)) || !parseInt_(t, b)) return;
+
+    const RectI c = Layout::CANVAS;
+    // x,y are relative to canvas origin:
+    display_->pixel((int16_t)(c.x + x), (int16_t)(c.y + y), (uint8_t)r, (uint8_t)g, (uint8_t)b);
+    return;
+  }
+
+  // Existing drawing commands (full-screen coordinates)
   if (strcmp(cmd, "text") == 0) {
     char t[24];
     int x,y,size,r,g,b;
@@ -137,6 +186,7 @@ void SerialConsole::handleLine_(char* s) {
   }
 
   logger_->warn("Unknown command. Type: help");
+
 }
 
 bool SerialConsole::nextToken_(char*& p, char* out, size_t outMax) {

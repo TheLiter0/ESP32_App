@@ -2,7 +2,6 @@
 #include <SPI.h>
 
 void Display::begin() {
-  // If you still see edge bars, try INITR_REDTAB or INITR_GREENTAB here.
   tft_.initR(INITR_GREENTAB);
   tft_.setRotation(1);
   tft_.fillScreen(ST77XX_BLACK);
@@ -45,3 +44,21 @@ void Display::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t r, ui
 
 int16_t Display::width() const { return tft_.width(); }
 int16_t Display::height() const { return tft_.height(); }
+
+// --- Helpers ---
+void Display::clearRect(int16_t x, int16_t y, int16_t w, int16_t h) {
+  tft_.fillRect(x, y, w, h, ST77XX_BLACK);
+}
+
+void Display::textInBox(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t size,
+                        uint8_t r, uint8_t g, uint8_t b, const char* msg) {
+  // Clear the region
+  clearRect(x, y, w, h);
+
+  // Simple padding so text isn't flush to edges
+  int16_t px = x + 2;
+  int16_t py = y + 2;
+
+  setText(px, py, size, r, g, b);
+  print(msg);
+}
