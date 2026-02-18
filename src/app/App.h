@@ -7,6 +7,7 @@
 #include "src/ui/ScreenManager.h"
 #include "src/ui/BootScreen.h"
 #include "src/services/FsService.h"
+#include "src/services/WebService.h"
 
 class App {
 public:
@@ -21,4 +22,6 @@ private:
   SerialConsole console_;
   ScreenManager screens_;
   BootScreen boot_;
+  WebService web_;
+
 };

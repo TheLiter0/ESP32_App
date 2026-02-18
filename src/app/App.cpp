@@ -5,6 +5,8 @@ void App::begin() {
   logger_.info("Boot");
   
   fs_.begin(&logger_, true);
+  
+  web_.begin(&logger_, &fs_);
 
   // 1) Display must be initialized first
   display_.begin();
@@ -25,5 +27,6 @@ void App::begin() {
 void App::update() {
   tick_.update();
   console_.update();
+  web_.update();
   screens_.update(display_);
 }
