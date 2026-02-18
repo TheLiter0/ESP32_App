@@ -6,6 +6,7 @@
 #include "src/services/SerialConsole.h"
 #include "src/ui/ScreenManager.h"
 #include "src/ui/BootScreen.h"
+#include "src/services/FsService.h"
 
 class App {
 public:
@@ -15,6 +16,7 @@ public:
 private:
   Logger logger_;
   Tick tick_;
+  FsService fs_;
   Display display_;
   SerialConsole console_;
   ScreenManager screens_;

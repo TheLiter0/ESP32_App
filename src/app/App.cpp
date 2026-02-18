@@ -3,6 +3,8 @@
 void App::begin() {
   logger_.begin(115200);
   logger_.info("Boot");
+  
+  fs_.begin(&logger_, true);
 
   // 1) Display must be initialized first
   display_.begin();
