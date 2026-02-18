@@ -1,13 +1,15 @@
 #pragma once
 
-#include "src/drivers/Display.h"
-#include "src/services/Logger.h"
-#include "src/services/Tick.h"
-#include "src/services/SerialConsole.h"
-#include "src/ui/ScreenManager.h"
-#include "src/ui/BootScreen.h"
-#include "src/services/FsService.h"
-#include "src/services/WebService.h"
+#include "drivers/Display.h"
+#include "services/Tick.h"
+#include "services/Logger.h"
+#include "services/SerialConsole.h"
+#include "ui/ScreenManager.h"
+#include "ui/BootScreen.h"
+#include "services/WebService.h"
+#include "services/FsService.h"
+#include "services/WiFiService.h"
+#include "services/WebService.h"
 
 class App {
 public:
@@ -16,12 +18,14 @@ public:
 
 private:
   Logger logger_;
-  Tick tick_;
-  FsService fs_;
   Display display_;
+
+  FsService fs_;
+  WiFiService wifi_;
+  WebService web_;
+
+  Tick tick_;
   SerialConsole console_;
   ScreenManager screens_;
   BootScreen boot_;
-  WebService web_;
-
 };

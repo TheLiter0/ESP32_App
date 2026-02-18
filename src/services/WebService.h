@@ -1,22 +1,24 @@
 #pragma once
 #include <Arduino.h>
 #include <WebServer.h>
-
-class Logger;
-class FsService;
+#include "services/Logger.h"
+#include "services/FsService.h"
+#include "services/WiFiService.h"
 
 class WebService {
 public:
-  void begin(Logger* log, FsService* fs);
+  void begin(Logger* logger, FsService* fs, WiFiService* wifi);
   void update();
 
+  bool started() const { return started_; }
+
 private:
-  Logger* log_ = nullptr;
+  void startServer_();
+
+  Logger* logger_ = nullptr;
   FsService* fs_ = nullptr;
+  WiFiService* wifi_ = nullptr;
 
   WebServer server_{80};
-
-  void handleHealth();
-  void handleInfo();
-  void handleFs();
+  bool started_ = false;
 };

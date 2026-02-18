@@ -1,5 +1,5 @@
-#include "src/ui/ScreenManager.h"
-#include "src/drivers/Display.h"
+#include "ui/ScreenManager.h"
+#include "drivers/Display.h"
 
 void ScreenManager::begin(Display&) {}
 

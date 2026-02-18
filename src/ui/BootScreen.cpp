@@ -1,6 +1,6 @@
-#include "src/ui/BootScreen.h"
-#include "src/drivers/Display.h"
-#include "src/ui/Layout.h"
+#include "ui/BootScreen.h"
+#include "drivers/Display.h"
+#include "ui/Layout.h"
 
 
 void BootScreen::begin(Display& d) {

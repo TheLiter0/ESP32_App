@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/ui/Screen.h"
+#include "ui/Screen.h"
 
 class Display;
 

@@ -1,6 +1,6 @@
-#include "src/services/Logger.h"
-#include "src/drivers/Display.h"
-#include "src/ui/Layout.h"
+#include "services/Logger.h"
+#include "drivers/Display.h"
+#include "ui/Layout.h"
 
 class SerialConsole {
 public:

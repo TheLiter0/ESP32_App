@@ -1,52 +1,88 @@
-#include "WebService.h"
-#include "Logger.h"
-#include "FsService.h"
+#include "services/WebService.h"
+#include <LittleFS.h>
 
-#include <WiFi.h>
-
-void WebService::begin(Logger* log, FsService* fs) {
-  log_ = log;
+void WebService::begin(Logger* logger, FsService* fs, WiFiService* wifi) {
+  logger_ = logger;
   fs_ = fs;
+  wifi_ = wifi;
 
-  // TEMP: hardcode WiFi for now
-  WiFi.begin("", "");
+  started_ = false;
 
-  if (log_) log_->info("Connecting WiFi...");
+  if (logger_) logger_->info("[Web] ready (waiting for WiFi)");
+}
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-  }
+void WebService::startServer_() {
+  server_.on("/health", HTTP_GET, [this]() {
+    server_.send(200, "text/plain", "ok");
+  });
 
-  if (log_) log_->info("WiFi connected");
-  if (log_) log_->info(WiFi.localIP().toString().c_str());
+  server_.on("/info", HTTP_GET, [this]() {
+    String msg = "ip=" + wifi_->ip().toString();
+    server_.send(200, "text/plain", msg);
+  });
 
-  server_.on("/health", HTTP_GET, [this]() { handleHealth(); });
-  server_.on("/info",   HTTP_GET, [this]() { handleInfo(); });
-  server_.on("/fs",     HTTP_GET, [this]() { handleFs(); });
+  server_.on("/fs", HTTP_GET, [this]() {
+    server_.send(200, "text/plain", fs_->mounted() ? "mounted" : "not mounted");
+  });
+
+  // Serve /index.html
+  server_.on("/", HTTP_GET, [this]() {
+    if (!fs_->mounted()) {
+      server_.send(500, "text/plain", "fs not mounted");
+      return;
+    }
+    if (!LittleFS.exists("/index.html")) {
+      server_.send(404, "text/plain", "missing /index.html");
+      return;
+    }
+    File f = LittleFS.open("/index.html", "r");
+    server_.streamFile(f, "text/html");
+    f.close();
+  });
+
+  // Static fallback: /app.js, /style.css, etc.
+  server_.onNotFound([this]() {
+    if (!fs_->mounted()) {
+      server_.send(404, "text/plain", "not found");
+      return;
+    }
+
+    String path = server_.uri();
+    if (path == "/") path = "/index.html";
+
+    if (!LittleFS.exists(path)) {
+      server_.send(404, "text/plain", "not found");
+      return;
+    }
+
+    String contentType = "text/plain";
+    if (path.endsWith(".html")) contentType = "text/html";
+    else if (path.endsWith(".js")) contentType = "application/javascript";
+    else if (path.endsWith(".css")) contentType = "text/css";
+    else if (path.endsWith(".png")) contentType = "image/png";
+
+    File f = LittleFS.open(path, "r");
+    server_.streamFile(f, contentType);
+    f.close();
+  });
 
   server_.begin();
+  started_ = true;
 
-  if (log_) log_->info("Web server started");
+  if (logger_) {
+    String msg = String("[Web] started: http://") + wifi_->ip().toString();
+    logger_->info(msg.c_str());
+  }
 }
 
 void WebService::update() {
-  server_.handleClient();
-}
-
-void WebService::handleHealth() {
-  server_.send(200, "text/plain", "ok");
-}
-
-void WebService::handleInfo() {
-  String msg = "IP: " + WiFi.localIP().toString();
-  server_.send(200, "text/plain", msg);
-}
-
-void WebService::handleFs() {
-  if (!fs_ || !fs_->mounted()) {
-    server_.send(500, "text/plain", "FS not mounted");
-    return;
+  // Start server once WiFi is connected (non-blocking)
+  if (!started_ && wifi_ && wifi_->connected()) {
+    startServer_();
   }
 
-  server_.send(200, "text/plain", "Filesystem mounted");
+  if (started_) {
+    server_.handleClient();
+  }
 }
+                         

@@ -1,32 +1,39 @@
-#include "App.h"
+#include "app/App.h"
 
 void App::begin() {
   logger_.begin(115200);
-  logger_.info("Boot");
-  
-  fs_.begin(&logger_, true);
-  
-  web_.begin(&logger_, &fs_);
+  logger_.info("[App] begin");
 
-  // 1) Display must be initialized first
+  // Display first
   display_.begin();
+  logger_.info("[Display] ok");
 
-  // 2) Now width/height are valid
-  logger_.info(String(display_.width()).c_str());
-  logger_.info(String(display_.height()).c_str());
+  // Filesystem
+  fs_.begin(&logger_, true);
+  logger_.info(fs_.mounted() ? "[FS] mounted=true" : "[FS] mounted=false");
 
-  // 3) Services
+  // WiFi
+  wifi_.begin(&logger_);
+  wifi_.startConnect("", ""); // temporary hardcode
+
+  // Web (waits for WiFi; no blocking)
+  web_.begin(&logger_, &fs_, &wifi_);
+
+  // Other services
   tick_.begin();
   console_.begin(&logger_, &display_);
 
-  // 4) Screens own the rendering
+  // ScreenManager uses Display& signatures
   screens_.begin(display_);
   screens_.set(&boot_, display_);
 }
 
 void App::update() {
   tick_.update();
-  console_.update();
+
+  wifi_.update();
   web_.update();
+
+  console_.update();
   screens_.update(display_);
 }
