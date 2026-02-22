@@ -14,7 +14,6 @@ void App::begin() {
 
   // WiFi
   wifi_.begin(&logger_);
-  wifi_.startConnect("", ""); // temporary hardcode
 
   // Web (waits for WiFi; no blocking)
   web_.begin(&logger_, &fs_, &wifi_);

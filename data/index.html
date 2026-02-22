@@ -1,29 +1,90 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ESP32 Screen</title>
-  <style>
-    body { font-family: sans-serif; padding: 16px; }
-    code { background:#eee; padding:2px 6px; border-radius:6px; }
-    button { padding:10px 14px; font-size:16px; }
-  </style>
+  <title>ESP32 Screen Canvas</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <h1>ESP32 Web UI</h1>
-  <p>If you can see this, LittleFS + WebService are working.</p>
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <div class="title">ESP32 Screen Canvas</div>
+        <div class="sub" id="status">Connecting…</div>
+      </div>
+    </div>
 
-  <button id="btn">Ping /health</button>
-  <pre id="out"></pre>
+    <div class="actions">
+      <button class="btn ghost" id="btnInfo">Device info</button>
+      <button class="btn ghost" id="btnClear">Clear</button>
+      <button class="btn" id="btnUpload">Upload to ESP32</button>
+    </div>
+  </header>
 
-  <script>
-    const out = document.getElementById("out");
-    document.getElementById("btn").onclick = async () => {
-      out.textContent = "Loading...";
-      const r = await fetch("/health");
-      out.textContent = await r.text();
-    };
-  </script>
+  <main class="grid">
+    <section class="card">
+      <div class="cardHeader">
+        <div>
+          <div class="cardTitle">Draw</div>
+          <div class="cardSub">Use mouse or touch. Upload sends a PNG.</div>
+        </div>
+
+        <div class="toolRow">
+          <label class="tool">
+            <span>Brush</span>
+            <input id="brush" type="range" min="1" max="32" value="6" />
+            <span class="mono" id="brushVal">6</span>
+          </label>
+
+          <label class="tool">
+            <span>Color</span>
+            <input id="color" type="color" value="#ffffff" />
+          </label>
+
+          <label class="tool">
+            <span>BG</span>
+            <input id="bg" type="color" value="#000000" />
+          </label>
+
+          <button class="btn ghost" id="btnFill">Fill BG</button>
+        </div>
+      </div>
+
+      <div class="canvasWrap">
+        <canvas id="c"></canvas>
+      </div>
+
+      <div class="footerRow">
+        <div class="hint">
+          Size: <span class="mono" id="sizeLabel">128×160</span> •
+          Mode: <span class="mono" id="modeLabel">PNG upload</span>
+        </div>
+
+        <div class="right">
+          <button class="btn ghost" id="btnDownload">Download PNG</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="cardHeader">
+        <div>
+          <div class="cardTitle">Console</div>
+          <div class="cardSub">Debug output from the page.</div>
+        </div>
+      </div>
+
+      <pre class="console" id="log"></pre>
+
+      <div class="footerRow">
+        <button class="btn ghost" id="btnCopyLog">Copy</button>
+        <button class="btn ghost" id="btnClearLog">Clear</button>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/app.js"></script>
 </body>
 </html>

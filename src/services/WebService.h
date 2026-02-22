@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <WebServer.h>
+#include <FS.h>
+
 #include "services/Logger.h"
 #include "services/FsService.h"
 #include "services/WiFiService.h"
@@ -21,4 +23,6 @@ private:
 
   WebServer server_{80};
   bool started_ = false;
+
+  File uploadFile_;
 };
