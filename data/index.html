@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ESP32 Display</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <div class="title">ESP32 Display</div>
+        <div class="sub" id="status">Connecting…</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost sm" id="btnInfo">ℹ</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="draw">✏️ Draw</button>
+    <button class="tab"        data-tab="gallery">🖼 Gallery</button>
+    <button class="tab"        data-tab="settings">⚙️ Settings</button>
+  </nav>
+
+  <!-- ═══ DRAW TAB ═══ -->
+  <div id="tab-draw" class="tabPanel active">
+
+    <!-- Sticky quick bar -->
+    <div class="quickBar">
+      <button class="toolPill" id="btnOpenTools">
+        <span id="activeTool">✏️</span>
+        <span id="activeToolName">Pen</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="barSep"></div>
+      <input type="color" id="color" value="#ffffff" class="quickColor" title="Foreground" />
+      <input type="color" id="bg"    value="#000000" class="quickColor" title="Background" />
+      <div class="barSep"></div>
+      <div class="sizeWrap">
+        <span class="hint sm">Size</span>
+        <input id="brush" type="range" min="1" max="40" value="6" class="sizeSlider" />
+        <span class="mono sm" id="brushVal">6</span>
+      </div>
+      <div class="barSep"></div>
+      <button class="iconBtn" id="btnUndo"  title="Undo (Ctrl+Z)">↩</button>
+      <button class="iconBtn" id="btnRedo"  title="Redo (Ctrl+Y)">↪</button>
+      <button class="iconBtn danger" id="btnClear" title="Clear canvas">🗑</button>
+      <button class="iconBtn" id="btnFillBG" title="Fill entire canvas with foreground colour">🎨</button>
+      <div class="barSep"></div>
+      <button class="iconBtn" id="btnZoomOut"   title="Zoom out">－</button>
+      <button class="iconBtn" id="btnZoomReset" title="Reset zoom" style="font-size:11px;font-weight:700">1:1</button>
+      <button class="iconBtn" id="btnZoomIn"    title="Zoom in">＋</button>
+    </div>
+
+    <!-- Canvas — front and centre -->
+    <div class="canvasArea">
+      <div class="canvasFrame">
+        <canvas id="c"></canvas>
+        <canvas id="ghost"></canvas>
+      </div>
+      <div class="canvasInfo">
+        <span class="mono" id="cursorPos">0, 0</span>
+        <span>240 × 180 · RGB565</span>
+      </div>
+    </div>
+
+    <!-- Tool drawer — below canvas, scroll to see -->
+    <div class="toolDrawer">
+      <!-- Opacity -->
+      <div class="drawerRow">
+        <span class="drawerLabel">Opacity</span>
+        <input id="opacity" type="range" min="1" max="100" value="100" class="sizeSlider" style="width:120px" />
+        <span class="mono sm" id="opacityVal">100%</span>
+      </div>
+    </div>
+
+    <!-- Upload bar -->
+    <div class="uploadBar">
+      <button class="btn ghost sm" id="btnDownload">⬇ PNG</button>
+      <button class="btn" id="btnUpload">⬆ Upload to ESP32</button>
+    </div>
+
+    <!-- Console — collapsed by default -->
+    <details class="consoleWrap">
+      <summary>Console</summary>
+      <pre class="console" id="log"></pre>
+      <div class="consoleFoot">
+        <button class="btn ghost sm" id="btnCopyLog">Copy</button>
+        <button class="btn ghost sm" id="btnClearLog">Clear</button>
+      </div>
+    </details>
+
+  </div><!-- /draw -->
+
+  <!-- ═══ TOOL POPUP ═══ -->
+  <div id="toolPopup" class="popup hidden" role="dialog">
+    <div class="popupInner">
+      <div class="popupTitle">
+        Tools
+        <button class="popClose" id="btnClosePopup">✕</button>
+      </div>
+
+      <div class="popSection">
+        <div class="popLabel">Draw tools</div>
+        <div class="popGrid tools5">
+          <button class="popTool active" data-tool="pen">✏️<span>Pen</span></button>
+          <button class="popTool" data-tool="eraser">🧹<span>Erase</span></button>
+          <button class="popTool" data-tool="fill">🪣<span>Fill</span></button>
+          <button class="popTool" data-tool="spray">💨<span>Spray</span></button>
+          <button class="popTool" data-tool="eyedrop">🔬<span>Pick</span></button>
+        </div>
+      </div>
+
+      <div class="popSection">
+        <div class="popLabel">Shapes — outline</div>
+        <div class="popGrid tools5">
+          <button class="popTool" data-tool="line">╱<span>Line</span></button>
+          <button class="popTool" data-tool="rect">▭<span>Rect</span></button>
+          <button class="popTool" data-tool="ellipse">⬭<span>Oval</span></button>
+          <button class="popTool" data-tool="triangle">△<span>Tri</span></button>
+          <button class="popTool" data-tool="arrow">→<span>Arrow</span></button>
+        </div>
+      </div>
+
+      <div class="popSection">
+        <div class="popLabel">Shapes — filled</div>
+        <div class="popGrid tools5">
+          <button class="popTool" data-tool="rectFill">■<span>Rect</span></button>
+          <button class="popTool" data-tool="ellipseFill">⬤<span>Oval</span></button>
+          <button class="popTool" data-tool="triFill">▲<span>Tri</span></button>
+          <button class="popTool" data-tool="star">★<span>Star</span></button>
+          <button class="popTool" data-tool="starFill">⭐<span>Star+</span></button>
+        </div>
+      </div>
+
+      <div class="popSection" id="brushSec">
+        <div class="popLabel">Brush cap</div>
+        <div class="popRow">
+          <button class="chipBtn active" data-shape="round">● Round</button>
+          <button class="chipBtn" data-shape="square">■ Square</button>
+        </div>
+      </div>
+
+      <div class="popSection">
+        <div class="popLabel">Colour palette <span class="hint">· shift+click = background</span></div>
+        <div class="palette" id="palette"></div>
+      </div>
+
+      <button class="btn ghost sm wide" id="btnSwapColors" style="margin-top:4px">⇄ Swap foreground ↔ background</button>
+    </div>
+  </div>
+  <div id="popupOverlay" class="popOverlay hidden"></div>
+
+  <!-- ═══ GALLERY TAB ═══ -->
+  <div id="tab-gallery" class="tabPanel">
+    <div class="card pgCard">
+      <div class="cardHeader">
+        <div>
+          <div class="cardTitle">Saved Images</div>
+          <div class="cardSub">Tap Show to display on the device.</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn ghost sm" id="btnReindexGallery">🔧 Repair</button>
+          <button class="btn ghost sm" id="btnRefreshGallery">↺ Refresh</button>
+        </div>
+      </div>
+      <div id="galleryGrid" class="galleryGrid">
+        <div class="galleryEmpty">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS TAB ═══ -->
+  <div id="tab-settings" class="tabPanel">
+    <div class="card pgCard">
+      <div class="cardHeader">
+        <div class="cardTitle">Device Settings</div>
+        <div class="cardSub">Saved directly to the ESP32.</div>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Clock in top bar</div>
+          <div class="settingDesc">Shows date and time</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settingClock" /><span></span></label>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Slideshow</div>
+          <div class="settingDesc">Cycle through saved images automatically</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settingSlideshow" /><span></span></label>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Slideshow interval</div>
+          <div class="settingDesc">Seconds between images</div>
+        </div>
+        <input type="number" id="settingInterval" min="1" max="3600" value="30"
+          style="width:72px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+                 color:var(--text);border-radius:9px;padding:7px 9px;font-size:13px" />
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Status bar mode</div>
+          <div class="settingDesc">What shows in the bottom bar on the device</div>
+        </div>
+        <select id="settingStatusMode" class="settingSelect">
+          <option value="wifi">WiFi info</option>
+          <option value="quote">Rotating quotes</option>
+          <option value="weather">Weather</option>
+        </select>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Top bar colour</div>
+          <div class="settingDesc">Background of the clock bar</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="settingTopBarColor" value="#121622"
+            style="width:44px;height:32px;border:1px solid var(--line);
+                   border-radius:8px;background:transparent;padding:2px;cursor:pointer" />
+          <span class="mono hint" id="settingTopBarHex">#121622</span>
+        </div>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Status bar colour</div>
+          <div class="settingDesc">Background of the bottom info bar</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="settingStatusBarColor" value="#0e121c"
+            style="width:44px;height:32px;border:1px solid var(--line);
+                   border-radius:8px;background:transparent;padding:2px;cursor:pointer" />
+          <span class="mono hint" id="settingStatusBarHex">#0e121c</span>
+        </div>
+      </div>
+
+      <!-- ── Text colours ── -->
+      <div class="settingRow" style="background:rgba(255,255,255,.02)">
+        <div><div class="settingTitle">Text colours</div>
+        <div class="settingDesc">Colour of each label on the device screen</div></div>
+      </div>
+
+      <div class="textColorGrid">
+        <div class="tcRow">
+          <span class="tcLabel">Date</span>
+          <input type="color" class="tcPick" id="tcDate" value="#82a0dc" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">Time</span>
+          <input type="color" class="tcPick" id="tcTime" value="#f0f0c8" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">Mode</span>
+          <input type="color" class="tcPick" id="tcMode" value="#50d2b4" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">IP</span>
+          <input type="color" class="tcPick" id="tcIp" value="#7896c8" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">Quote</span>
+          <input type="color" class="tcPick" id="tcQuote" value="#c8bea0" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">City</span>
+          <input type="color" class="tcPick" id="tcWeatherCity" value="#8cd2ff" />
+        </div>
+        <div class="tcRow">
+          <span class="tcLabel">Weather</span>
+          <input type="color" class="tcPick" id="tcWeatherTemp" value="#ffdc64" />
+        </div>
+      </div>
+
+      <div id="weatherSection" class="settingRow" style="display:none">
+        <div>
+          <div class="settingTitle">City name</div>
+          <div class="settingDesc">Displayed on the device</div>
+        </div>
+        <input type="text" id="settingWeatherCity" value="Grand Rapids"
+          style="width:140px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+                 color:var(--text);border-radius:9px;padding:7px 9px;font-size:13px" />
+      </div>
+      <div id="weatherCoordsRow" class="settingRow" style="display:none">
+        <div>
+          <div class="settingTitle">Coordinates</div>
+          <div class="settingDesc">Latitude, Longitude</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="settingWeatherLat" value="42.93" placeholder="Lat"
+            style="width:70px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+                   color:var(--text);border-radius:9px;padding:7px 9px;font-size:13px" />
+          <input type="text" id="settingWeatherLon" value="-85.68" placeholder="Lon"
+            style="width:70px;background:rgba(0,0,0,.3);border:1px solid var(--line);
+                   color:var(--text);border-radius:9px;padding:7px 9px;font-size:13px" />
+        </div>
+      </div>
+      <div id="weatherFetchRow" class="settingRow" style="display:none;border-bottom:none">
+        <div>
+          <div class="settingTitle">Weather status</div>
+          <div class="settingDesc" id="weatherStatus">Not fetched yet</div>
+        </div>
+        <button class="btn ghost sm" id="btnFetchWeather">Fetch now</button>
+      </div>
+
+      <div class="settingRow">
+        <div>
+          <div class="settingTitle">Quotes</div>
+          <div class="settingDesc">One per line — shown when status mode is "Rotating quotes"</div>
+        </div>
+      </div>
+      <textarea id="settingQuotes" rows="5"
+        placeholder="Enter one quote per line, e.g:&#10;Stay curious&#10;Every pixel counts"
+        style="width:100%;background:rgba(0,0,0,.22);border:1px solid var(--line);
+               color:var(--text);border-radius:10px;padding:10px 12px;font-size:13px;
+               resize:vertical;display:block;box-sizing:border-box"></textarea>
+
+      <div class="settingActions">
+        <button class="btn" id="btnSaveSettings">Save Settings</button>
+        <button class="btn ghost sm" id="btnNextSlide">▶ Next image</button>
+        <span id="settingsStatus" class="hint"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
