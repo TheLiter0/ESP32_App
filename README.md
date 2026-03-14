@@ -1,145 +1,206 @@
-# ESP32 Web Drawing Display
+# ESP32 Display Control System
 
-An embedded system that lets users sketch on a browser canvas and render the drawing in real time on an ESP32-connected TFT display. The ESP32 hosts its own local web server, so no internet connection or external backend is required.
+An ESP32-powered web-controlled display system built around a 240×240 ST7789 screen.
+
+The ESP32 serves its own web app, lets you draw from a browser, uploads the drawing as raw RGB565 data, shows it on the screen, and is being expanded into a small standalone display platform with saved images, gallery controls, slideshow mode, quotes, clock, and weather.
 
 ---
 
-## How It Works
+## What this project does
 
-```
-Browser Canvas  →  HTTP Upload  →  ESP32 Web Server  →  TFT Display
-```
+This project turns an ESP32 + TFT screen into a self-hosted display device.
 
-1. The ESP32 connects to your Wi-Fi network and starts a local HTTP server.
-2. Any device on the same network can open the drawing interface in a browser.
-3. The user draws on the canvas and hits **Upload**.
-4. The ESP32 receives the image data and renders it pixel-by-pixel on the TFT display.
+Current direction:
+
+- host a browser-based drawing app directly from the ESP32
+- upload drawings to the device
+- render them on the TFT display
+- save images to LittleFS
+- manage images through a gallery
+- support slideshow mode
+- show a home screen with a top bar, main image area, and bottom status bar
+- support quotes, clock, and weather in the UI
+
+---
+
+## Main idea
+
+The system is split into two parts:
+
+### 1. Browser UI
+A phone, tablet, or computer connects to the ESP32 and opens the built-in web app.
+
+From there you can:
+
+- draw on a canvas
+- change colors and brush size
+- use shape tools
+- upload the current canvas to the ESP32
+- browse saved images
+- change device settings
+
+### 2. ESP32 device
+The ESP32:
+
+- hosts the website
+- receives uploads
+- drives the TFT display
+- stores settings and image data in LittleFS
+- manages Wi-Fi / hotspot mode
+- updates the on-screen UI
+
+---
+
+## Display layout
+
+The screen is organized into three regions:
+
+- **Top bar** — date / time / title area
+- **Canvas area** — main image display area
+- **Bottom status bar** — Wi-Fi info, quotes, or weather
+
+Current layout from `Layout.h`:
+
+- Top bar: `240 × 30`
+- Canvas area: `240 × 180`
+- Status bar: `240 × 30`
 
 ---
 
 ## Features
 
-- **Zero-dependency frontend** — drawing interface served directly from the ESP32, no app needed
-- **Works on any device** — phone, tablet, or desktop browser
-- **Real-time rendering** — image appears on the TFT display within seconds of uploading
-- **Lightweight HTTP server** — handles drawing uploads, previews, and status checks
-- **Supports ST7735 & ST7789** — common SPI TFT displays
+### Working now
+- ESP32 web server hosted directly on the device
+- Browser drawing interface
+- Raw RGB565 upload pipeline
+- TFT image rendering
+- ST7789 display driver wrapper
+- LittleFS support
+- Wi-Fi station mode
+- Hotspot / AP mode
+- Boot screen with connection info
+- Home screen architecture
+- Settings storage
+- Quote loading from JSON
+- Weather JSON storage and display hooks
+- Gallery and settings pages in the web UI
+
+### In active development
+- persistent saved image flow
+- image index repair / rebuild tools
+- slideshow behavior
+- polished home screen behavior
+- storage stability and cleanup
+- modular frontend cleanup
 
 ---
 
-## Hardware Requirements
+## Hardware
 
-| Component | Notes |
-|-----------|-------|
-| ESP32 development board | Any standard ESP32 devkit |
-| SPI TFT display | ST7735 or ST7789 |
-| Jumper wires | |
-| USB cable | For flashing and power |
+### Required
+- ESP32 development board
+- ST7789 SPI display (240×240)
+- USB cable
+- jumper wires
 
-### Wiring
+### Current display pins
+The current code defaults to:
 
-| ESP32 Pin | Display Pin |
-|-----------|-------------|
-| GPIO 23 | MOSI |
-| GPIO 18 | SCLK |
-| GPIO 5 | CS |
-| GPIO 2 | DC |
-| GPIO 4 | RST |
-| 3.3V | VCC |
-| GND | GND |
+- `TFT_CS   = GPIO5`
+- `TFT_DC   = GPIO2`
+- `TFT_RST  = GPIO4`
 
----
+SPI uses the ESP32 hardware SPI pins.
 
-## Software Requirements
+### Mode switch
+The project uses:
 
-**Tools:**
-- [PlatformIO](https://platformio.org/) + VS Code
-- ESP32 Arduino Framework
+- `GPIO27` as a startup mode switch
+- `GPIO22` and `GPIO21` as simple indicators
 
-**Libraries** (managed via PlatformIO):
-- `WiFi`
-- `WebServer`
-- `SPI`
-- `Adafruit_GFX`
-- `Adafruit_ST7735` / `Adafruit_ST7789`
+Behavior:
+
+- **GPIO27 grounded** → station / Wi-Fi mode
+- **GPIO27 open** → hotspot mode
 
 ---
 
-## Getting Started
+## Network behavior
 
-### 1. Clone and configure
+The device supports two startup modes.
 
-```bash
-git clone https://github.com/TheLiter0/ESP32_App.git
-cd ESP32_App
-```
+### Station mode
+If `GPIO27` is grounded on boot, the ESP32 tries to connect to saved Wi-Fi networks from `src/secrets.h`.
 
-Add `src/secrets.h` (or edit your config file) to set your Wi-Fi credentials:
+### Hotspot mode
+If `GPIO27` is not grounded, the ESP32 starts its own access point.
 
-```cpp
-const char* SSID     = "your-network";
-const char* PASSWORD = "your-password";
-```
+Current defaults:
 
-### 2. Build and flash
-
-```bash
-pio run --target upload       # Flash firmware
-pio run --target uploadfs     # Upload web interface to SPIFFS
-```
-
-### 3. Use it
-
-1. Power the ESP32 — it will connect to Wi-Fi and print its IP address over serial.
-2. On a device connected to the same network, open a browser and go to the ESP32's IP.
-3. Draw on the canvas and click **Upload**.
-4. The image renders on the TFT display.
+- **SSID:** `ESP32_Draw`
+- **Password:** `draw1234`
 
 ---
 
-## API Routes
+## Tech stack
 
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/` | GET | Serves the web drawing interface |
-| `/upload` | POST | Receives image data from the canvas |
-| `/preview` | GET | Returns the currently stored image |
-| `/status` | GET | Returns device status info |
+- **PlatformIO**
+- **ESP32 Arduino framework**
+- **LittleFS**
+- **Adafruit GFX**
+- **Adafruit ST7735/ST7789 library**
+- **WebServer**
+- **WiFi / WiFiServer**
 
 ---
 
-## Project Structure
+## Project structure
 
-```
+```text
 ESP32_App/
+├── data/                        # Files uploaded to LittleFS and served by the ESP32
+│   ├── index.html               # Main web UI
+│   ├── style.css                # Frontend styling
+│   ├── app.js                   # Frontend logic
+│   ├── config/
+│   │   ├── settings.json
+│   │   └── quotes.json
+│   └── images/
+│       └── index.json
+│
 ├── src/
+│   ├── app/
+│   │   ├── App.h
+│   │   └── App.cpp              # Main application wiring
+│   │
 │   ├── drivers/
-│   │   ├── Display.h / .cpp       # TFT display driver
+│   │   ├── Display.h
+│   │   └── Display.cpp          # Screen wrapper around Adafruit ST7789
+│   │
 │   ├── services/
-│   │   ├── WebService.h / .cpp    # HTTP server logic
-│   │   └── WiFiService.h / .cpp   # Wi-Fi connection management
+│   │   ├── FsService.*          # LittleFS mount/setup
+│   │   ├── WiFiService.*        # Wi-Fi / AP management
+│   │   ├── WebService.*         # Web UI + API + upload server
+│   │   ├── ImageStore.*         # Saved image storage/index logic
+│   │   ├── SettingsService.*    # Device settings load/save
+│   │   ├── ClockService.*       # NTP / time formatting
+│   │   ├── QuoteService.*       # Quote loading/rotation
+│   │   ├── SlideshowService.*   # Slideshow control
+│   │   ├── WeatherService.*     # Weather JSON storage/formatting
+│   │   ├── Logger.h
+│   │   ├── SerialConsole.*
+│   │   └── Tick.h
+│   │
 │   ├── ui/
-│   │   ├── BootScreen.h / .cpp    # Startup screen
-│   │   └── Layout.h / .cpp        # Display layout helpers
-│   └── main.cpp
-├── data/                           # Web interface files (served via SPIFFS)
+│   │   ├── Layout.h
+│   │   ├── Screen.h
+│   │   ├── ScreenManager.*
+│   │   ├── BootScreen.*
+│   │   └── HomeScreen.*
+│   │
+│   ├── main.cpp
+│   └── secrets.h                # Local Wi-Fi credentials (not for public commits)
+│
 ├── platformio.ini
+├── partitions.csv
 └── README.md
-```
-
----
-
-## Roadmap
-
-- [ ] Live drawing streaming (no upload step)
-- [ ] Multiple UI screens / navigation
-- [ ] On-device image storage and gallery mode
-- [ ] Touchscreen input support
-- [ ] OTA firmware updates
-- [ ] Animation playback
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE) for details.
